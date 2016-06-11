@@ -1,5 +1,7 @@
 require 'open-uri'
 require 'nokogiri'
+require_relative 'speciality'
+require_relative 'student'
 
 class Page_parser
 
@@ -72,15 +74,23 @@ class Page_parser
     title = doc.css('.sticky-nav')[0]
     specialisation = title.css('li a')[0]['title']
     university = title.css('li a')[1]['title']
-    puts "spec: #{specialisation}"
-    puts "univ: #{university}"
-    puts "state order volume: #{state_order_volume}"
+    # puts "spec: #{specialisation}"
+    # puts "univ: #{university}"
+    # puts "state order volume: #{state_order_volume}"
+    #
+    # n= names.length
+    # (0..n-1).each { |i|
+    #   puts "name: #{names[i]}       pr: #{prior[i]}       zno: #{zno[i]}"
+    # }
 
-    n= names.length
-    (0..n-1).each { |i|
-      puts "name: #{names[i]}       pr: #{prior[i]}       zno: #{zno[i]}"
+    speciality = Speciality.new(specialisation, university, state_order_volume)
+    n = names.length
+    (0 .. n-1).each { |i|
+      student = Student.new(names[i], prior[i], zno[i])
+      speciality.add_student(student)
     }
 
+    speciality
   end
 
 end
@@ -91,5 +101,8 @@ end
 #path = 'http://vstup.info/2015/41/i2015i41p240447.html'
 #path = 'http://vstup.info/2015/41/i2015i41p247726.html#list'
 path = 'http://vstup.info/2015/79/i2015i79p207709.html#list'
+#path = 'http://vstup.info/2015/174/i2015i174p212763.html#list'
 
-Page_parser.parse(path)
+speciality = Page_parser.parse(path)
+
+puts speciality
