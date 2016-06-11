@@ -22,15 +22,15 @@ class Page_parser
       headers_size = headers.length
     end
 
-
     names = []
     prior = []
     zno = []
     cur_i= -3
 
+    state_order_volume = 0
     doc.css('#list .container .row .tablesaw.tablesaw-stack tbody tr td').each do |node|
       if node.text.include?('Обсяг державного замовлення')
-        puts "size: #{node.text[/\d+/].to_i}"
+        state_order_volume = node.text[/\d+/].to_i
         cur_i = -2
       else
         #last line before table
@@ -44,6 +44,11 @@ class Page_parser
             #any line in table
             if cur_i >= 0
               case cur_i
+                when 0
+                  rating = node.text[/\d+/].to_i
+                  if rating > state_order_volume
+                    break
+                  end
                 when name_index
                   names << node.text
                 when priority_index
@@ -64,6 +69,13 @@ class Page_parser
 
     end
 
+    title = doc.css('.sticky-nav')[0]
+    specialisation = title.css('li a')[0]['title']
+    university = title.css('li a')[1]['title']
+    puts "spec: #{specialisation}"
+    puts "univ: #{university}"
+    puts "state order volume: #{state_order_volume}"
+
     n= names.length
     (0..n-1).each { |i|
       puts "name: #{names[i]}       pr: #{prior[i]}       zno: #{zno[i]}"
@@ -76,7 +88,8 @@ end
 
 #path = 'E:\\vstup2015\\vstup.info\\2015\\976\\i2015i976p202686.html'
 #path = 'E:\\vstup2015\\vstup.info\\2015\\288\\i2015i288p255754.html'
-path = 'http://vstup.info/2015/41/i2015i41p240447.html'
+#path = 'http://vstup.info/2015/41/i2015i41p240447.html'
 #path = 'http://vstup.info/2015/41/i2015i41p247726.html#list'
+path = 'http://vstup.info/2015/79/i2015i79p207709.html#list'
 
 Page_parser.parse(path)
