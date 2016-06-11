@@ -6,6 +6,23 @@ class Page_parser
   #path - url or path on drive to html file
   def self.parse(path)
     doc = Nokogiri::HTML(open(path))
+
+    headers = []
+    doc.xpath('//*/table/thead/tr/th').each do |th|
+      headers << th.text
+    end
+
+    if !headers.include?('ПІБ') || !headers.include?('П') || !headers.include?('ЗНО')
+      puts 'wrong table formate!'
+      return
+    else
+      name_index = headers.index('ПІБ')
+      priority_index = headers.index('П')
+      zno_index = headers.index('ЗНО')
+      headers_size = headers.length
+    end
+
+
     doc.css('#list .container .row .tablesaw.tablesaw-stack tbody tr td').each do |node|
       if node.text.include?('Обсяг державного замовлення')
         puts "size: #{node.text[/\d+/].to_i}"
