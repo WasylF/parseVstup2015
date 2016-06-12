@@ -14,19 +14,21 @@ class Page_parser
       headers << th.text
     end
 
-    if !headers.include?('ПІБ') || !headers.include?('П') || !headers.include?('ЗНО')
+    if !headers.include?('ПІБ') || !headers.include?('П') || !headers.include?('ЗНО') || !headers.include?('С')
       puts 'wrong table format!'
       return
     else
       name_index = headers.index('ПІБ')
       priority_index = headers.index('П')
       zno_index = headers.index('ЗНО')
+      certificate_index = headers.index('С')
       headers_size = headers.length
     end
 
     names = []
     prior = []
     zno = []
+    certificate = []
     cur_i= -3
 
     state_order_volume = 0
@@ -57,6 +59,8 @@ class Page_parser
                   prior << node.text
                 when zno_index
                   zno << node.text
+                when certificate_index
+                  certificate << node.text
               end
 
               cur_i += 1
@@ -86,7 +90,7 @@ class Page_parser
     speciality = Speciality.new(specialisation, university, state_order_volume)
     n = names.length
     (0 .. n-1).each { |i|
-      student = Student.new(names[i], prior[i], zno[i])
+      student = Student.new(names[i], prior[i], zno[i], certificate[i])
       speciality.add_student(student)
     }
 
@@ -96,11 +100,11 @@ class Page_parser
 end
 
 
-#path = 'E:\\vstup2015\\vstup.info\\2015\\976\\i2015i976p202686.html'
+path = 'E:\\vstup2015\\vstup.info\\2015\\976\\i2015i976p202686.html'
 #path = 'E:\\vstup2015\\vstup.info\\2015\\288\\i2015i288p255754.html'
 #path = 'http://vstup.info/2015/41/i2015i41p240447.html'
 #path = 'http://vstup.info/2015/41/i2015i41p247726.html#list'
-path = 'http://vstup.info/2015/79/i2015i79p207709.html#list'
+#path = 'http://vstup.info/2015/79/i2015i79p207709.html#list'
 #path = 'http://vstup.info/2015/174/i2015i174p212763.html#list'
 
 speciality = Page_parser.parse(path)

@@ -1,10 +1,11 @@
 class Student
-  attr_reader :name, :priority, :zno
+  attr_reader :name, :priority, :zno, :certificate
 
-  def initialize(name, priority, zno)
+  def initialize(name, priority, zno, certificate)
     @name = name
     @priority = priority
     @zno = zno
+    @certificate = certificate
   end
 
   def to_s
