@@ -3,7 +3,56 @@ require 'nokogiri'
 require_relative 'speciality'
 require_relative 'student'
 
+
 class Page_parser
+  @@missed_all = 0
+  @@missed_priority = 0
+  @@missed_name = 0
+  @@missed_zno = 0
+  @@missed_certificate = 0
+
+  class << self
+    def get_missed_all
+      @@missed_all
+    end
+
+    def get_missed_priority
+      @@missed_priority
+    end
+
+    def get_missed_name
+      @@missed_name
+    end
+
+    def get_missed_zno
+      @@missed_zno
+    end
+
+    def get_missed_certificate
+      @@missed_certificate
+    end
+
+    def inc_missed_all
+      @@missed_all += 1
+    end
+
+    def inc_missed_priority
+      @@missed_priority += 1
+    end
+
+    def inc_missed_name
+      @@missed_name += 1
+    end
+
+    def inc_missed_zno
+      @@missed_zno += 1
+    end
+
+    def inc_missed_certificate
+      @@missed_certificate += 1
+    end
+  end
+
 
   #path - url or path on drive to html file
   def self.parse(path)
@@ -14,15 +63,40 @@ class Page_parser
       headers << th.text
     end
 
-    if !headers.include?('ПІБ') || !headers.include?('П') || !headers.include?('ЗНО') || !headers.include?('С')
-      puts 'wrong table format!'
+    if !headers.include?('ПІБ') && !headers.include?('П') && !headers.include?('ЗНО') && !headers.include?('С')
+      puts 'totally wrong table format!'
+      puts "file_name: #{path}"
+      inc_missed_all
       return
+    end
+
+    if !headers.include?('П') #not a bachelor
+      inc_missed_priority
     else
-      name_index = headers.index('ПІБ')
       priority_index = headers.index('П')
+    end
+
+    headers_size = headers.length
+    if headers.include?('ПІБ')
+      name_index = headers.index('ПІБ')
+    else
+      inc_missed_name
+    end
+
+    if headers.include?('ЗНО')
       zno_index = headers.index('ЗНО')
+    else
+      inc_missed_zno
+    end
+
+    if headers.include?('С')
       certificate_index = headers.index('С')
-      headers_size = headers.length
+    else
+      inc_missed_certificate
+    end
+
+    if !headers.include?('ПІБ') || !headers.include?('П') || !headers.include?('ЗНО') || !headers.include?('С')
+      return
     end
 
     names = []
@@ -48,11 +122,11 @@ class Page_parser
             #any line in table
             if cur_i >= 0
               case cur_i
-                when 0
-                  rating = node.text[/\d+/].to_i
-                  if rating > state_order_volume
-                    break
-                  end
+                # when 0
+                #   rating = node.text[/\d+/].to_i
+                #   if rating > state_order_volume
+                #     break
+                #   end
                 when name_index
                   names << node.text
                 when priority_index
@@ -100,13 +174,14 @@ class Page_parser
 end
 
 
-path = 'E:\\vstup2015\\vstup.info\\2015\\976\\i2015i976p202686.html'
+#path = 'E:\\vstup2015\\vstup.info\\2015\\976\\i2015i976p202686.html'
 #path = 'E:\\vstup2015\\vstup.info\\2015\\288\\i2015i288p255754.html'
 #path = 'http://vstup.info/2015/41/i2015i41p240447.html'
 #path = 'http://vstup.info/2015/41/i2015i41p247726.html#list'
 #path = 'http://vstup.info/2015/79/i2015i79p207709.html#list'
 #path = 'http://vstup.info/2015/174/i2015i174p212763.html#list'
+#path = 'E:/Wsl_F/test/2/i2015i2p255724.html'
+#path = 'http://vstup.info/2015/357/i2015i357p230569.html'
+#speciality = Page_parser.parse(path)
 
-speciality = Page_parser.parse(path)
-
-puts speciality
+#puts speciality
