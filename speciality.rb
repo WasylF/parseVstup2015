@@ -43,4 +43,7 @@ class Speciality
     @students[@volume..-1]
   end
 
+  def get_name
+    "#{@university}_#{@caption}"
+  end
 end
