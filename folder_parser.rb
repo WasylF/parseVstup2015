@@ -7,6 +7,8 @@ class Folder_parser
     @total_state_order_volume = 0
     @res = []
     @specialities = []
+
+    @files_to_delete = []
   end
 
 
@@ -140,10 +142,15 @@ class Folder_parser
       speciality = page_parser.parse
       if process_speciality(speciality)
         @specialities << speciality
+      else
+        @files_to_delete << file
       end
     }
 
-    puts "#{@total_files_number} files have been parsed\n"
+    puts "#{@total_files_number} files have been parsed"
+    puts "\n"
+
+    @specialities
   end
 
 
@@ -199,12 +206,73 @@ class Folder_parser
   end
 
 
+  def print_statistic_to_file(file_name)
+    File.open(file_name, 'w') { |file|
+      file.puts('#############################################################################################################')
+      file.puts('#############################################################################################################')
+      file.puts('*                                           S T A T I S T I C                                               *')
+      file.puts('*************************************************************************************************************')
+
+      file.puts("total number of files: #{@total_files_number}")
+      file.puts("total bachelor specialities: #{@specialities.length}")
+      file.puts("\n")
+
+      total_with_priorities = 0
+      (1..15).each { |i|
+        total_with_priorities+= @all_priorities[i]
+      }
+      file.puts("total state order volume: #{@total_state_order_volume}")
+      file.puts("students with priorities: #{total_with_priorities}")
+      file.puts("\n")
+
+      file.puts('students that entered university with priority:')
+      (1..15).each { |i|
+        file.puts(" #{i}\t\t#{@all_priorities[i]}")
+      }
+      file.puts("\n")
+
+      missed_all = Page_parser.get_missed_all
+      missed_priority = Page_parser.get_missed_priority
+      missed_name = Page_parser.get_missed_name
+      missed_zno = Page_parser.get_missed_zno
+      missed_certificate = Page_parser.get_missed_certificate
+
+      file.puts("totally wrong tables: #{missed_all}")
+      file.puts("missed priorities: #{missed_priority}")
+      file.puts("missed names: #{missed_name}")
+      file.puts("missed znos: #{missed_zno}")
+      file.puts("missed certificates: #{missed_certificate}")
+      file.puts("\n")
+
+      file.puts('*************************************************************************************************************')
+      file.puts('*                                      E N D      S T A T I S T I C                                         *')
+      file.puts('#############################################################################################################')
+      file.puts('#############################################################################################################')
+    }
+  end
+
+  def print_all_good_specialities_names
+    @specialities.each { |speciality|
+      puts speciality.caption
+    }
+  end
+
+  def delete_files
+
+    puts "try to delete #{@files_to_delete.length} useless files"
+    not_deleted = 0
+
+    @files_to_delete.each { |file_name|
+      begin
+        #delete "not bachelor" files
+        File.delete(file_name)
+      rescue Exception => e
+        puts e.message
+        not_deleted += 1
+      end
+    }
+
+    puts "#{@files_to_delete.length-not_deleted} files deleted successfully"
+    puts "#{not_deleted} files wasn't deleted"
+  end
 end
-
-path = 'E:/Wsl_F/test2/'
-#path = 'E:/vstup/'
-fp = Folder_parser.new
-
-fp.parse(path)
-fp.print_statistic
-fp.print_res('E:\ProgramingProjects\Ruby\parseVstup2015\res.csv')
