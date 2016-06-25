@@ -53,11 +53,19 @@ class Page_parser
     end
   end
 
+  def initialize(file_path)
+    @path = file_path
 
-  #path - url or path on drive to html file
-  def self.parse(path)
-    doc = Nokogiri::HTML(open(path))
+    @names = []
+    @prior = []
+    @zno = []
+    @certificate = []
 
+    @state_order_volume = 0
+
+  end
+
+  def check_format(doc)
     headers = []
     doc.xpath('//*/table/thead/tr/th').each do |th|
       headers << th.text
@@ -65,50 +73,55 @@ class Page_parser
 
     if !headers.include?('ПІБ') && !headers.include?('П') && !headers.include?('ЗНО') && !headers.include?('С')
       puts 'totally wrong table format!'
-      puts "file_name: #{path}"
-      inc_missed_all
-      return
+      puts "file_name: #{@path}"
+      Page_parser.inc_missed_all
+      return false
     end
 
+    @headers_size = headers.length
+    return check_headers(headers)
+  end
+
+  def check_headers(headers)
+    flag = true
     if !headers.include?('П') #not a bachelor
-      inc_missed_priority
+      Page_parser.inc_missed_priority
+      flag = false
     else
-      priority_index = headers.index('П')
+      @priority_index = headers.index('П')
     end
 
-    headers_size = headers.length
     if headers.include?('ПІБ')
-      name_index = headers.index('ПІБ')
+      @name_index = headers.index('ПІБ')
     else
-      inc_missed_name
+      Page_parser.inc_missed_name
+      flag = false
     end
 
     if headers.include?('ЗНО')
-      zno_index = headers.index('ЗНО')
+      @zno_index = headers.index('ЗНО')
     else
-      inc_missed_zno
+      Page_parser.inc_missed_zno
+      flag = false
     end
 
     if headers.include?('С')
-      certificate_index = headers.index('С')
+      @certificate_index = headers.index('С')
     else
-      inc_missed_certificate
+      Page_parser.inc_missed_certificate
+      flag = false
     end
 
-    if !headers.include?('ПІБ') || !headers.include?('П') || !headers.include?('ЗНО') || !headers.include?('С')
-      return
-    end
+    flag
+  end
 
-    names = []
-    prior = []
-    zno = []
-    certificate = []
+
+  def parse_table(doc)
     cur_i= -3
 
-    state_order_volume = 0
     doc.css('#list .container .row .tablesaw.tablesaw-stack tbody tr td').each do |node|
       if node.text.include?('Обсяг державного замовлення')
-        state_order_volume = node.text[/\d+/].to_i
+        @state_order_volume = node.text[/\d+/].to_i
         cur_i = -2
       else
         #last line before table
@@ -122,49 +135,46 @@ class Page_parser
             #any line in table
             if cur_i >= 0
               case cur_i
-                # when 0
-                #   rating = node.text[/\d+/].to_i
-                #   if rating > state_order_volume
-                #     break
-                #   end
-                when name_index
-                  names << node.text
-                when priority_index
-                  prior << node.text
-                when zno_index
-                  zno << node.text
-                when certificate_index
-                  certificate << node.text
+                when @name_index
+                  @names << node.text
+                when @priority_index
+                  @prior << node.text
+                when @zno_index
+                  @zno << node.text
+                when @certificate_index
+                  @certificate << node.text
               end
 
               cur_i += 1
-              if cur_i == headers_size
+              if cur_i == @headers_size
                 cur_i = 0
               end
             end
           end
-
         end
       end
-
     end
+
+  end
+
+  #path - url or path on drive to html file
+  def parse
+    doc = Nokogiri::HTML(open(@path))
+
+    if !check_format(doc)
+      return
+    end
+
+    parse_table(doc)
 
     title = doc.css('.sticky-nav')[0]
     specialisation = title.css('li a')[0]['title']
     university = title.css('li a')[1]['title']
-    # puts "spec: #{specialisation}"
-    # puts "univ: #{university}"
-    # puts "state order volume: #{state_order_volume}"
-    #
-    # n= names.length
-    # (0..n-1).each { |i|
-    #   puts "name: #{names[i]}       pr: #{prior[i]}       zno: #{zno[i]}"
-    # }
 
-    speciality = Speciality.new(specialisation, university, state_order_volume)
-    n = names.length
+    speciality = Speciality.new(specialisation, university, @state_order_volume)
+    n = @names.length
     (0 .. n-1).each { |i|
-      student = Student.new(names[i], prior[i], zno[i], certificate[i])
+      student = Student.new(@names[i], @prior[i], @zno[i], @certificate[i])
       speciality.add_student(student)
     }
 
@@ -182,6 +192,9 @@ end
 #path = 'http://vstup.info/2015/174/i2015i174p212763.html#list'
 #path = 'E:/Wsl_F/test/2/i2015i2p255724.html'
 #path = 'http://vstup.info/2015/357/i2015i357p230569.html'
-#speciality = Page_parser.parse(path)
+#path = 'E:/vstup2015/vstup.info/2015/1004/i2015i1004p272076.html'
+#path = 'E:/Wsl_F/test/44/i2015i44p203910.html'
+#page_parser = Page_parser.new(path)
+#speciality = page_parser.parse
 
 #puts speciality
