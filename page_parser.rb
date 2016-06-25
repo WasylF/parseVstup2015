@@ -174,7 +174,7 @@ class Page_parser
     speciality = Speciality.new(specialisation, university, @state_order_volume)
     n = @names.length
     (0 .. n-1).each { |i|
-      student = Student.new(@names[i], @prior[i], @zno[i], @certificate[i])
+      student = Student.new(@names[i].to_s, @prior[i].to_i, @zno[i].to_s, @certificate[i].to_f)
       speciality.add_student(student)
     }
 
