@@ -129,11 +129,17 @@ class Folder_parser
     files = get_all_files(folder_path)
 
     @total_files_number = files.length
+    if @total_files_number < 1000
+      part_size = @total_files_number / 10 + 1
+    else
+      part_size = @total_files_number / 40
+    end
+    part_size += -(part_size%10) + 10
     puts "\n\ntotal number of files: #{@total_files_number}\n\n"
 
     index = 0
     files.each { |file|
-      if index % 1000 == 0
+      if index % part_size == 0
         puts "#{index} files have been parsed"
       end
       index += 1
@@ -261,18 +267,26 @@ class Folder_parser
 
     puts "try to delete #{@files_to_delete.length} useless files"
     not_deleted = 0
+    deleted = 0
 
-    @files_to_delete.each { |file_name|
-      begin
-        #delete "not bachelor" files
-        File.delete(file_name)
-      rescue Exception => e
-        puts e.message
-        not_deleted += 1
-      end
+    (0..10).each { |i|
+      @files_to_delete.each { |file_name|
+        begin
+          if File.exist?(file_name)
+            #delete "not bachelor" files
+            File.delete(file_name)
+            deleted += 1
+          end
+        rescue Exception => e
+          #puts e.message
+          not_deleted += 1
+        end
+      }
+      puts "#{i}) #{deleted} files deleted successfully"
     }
 
-    puts "#{@files_to_delete.length-not_deleted} files deleted successfully"
-    puts "#{not_deleted} files wasn't deleted"
+    puts "#{deleted} files deleted successfully"
+    puts "#{not_deleted} unsuccessful attempts"
+    puts "#{@files_to_delete.length - deleted} files wasn't delete"
   end
 end
